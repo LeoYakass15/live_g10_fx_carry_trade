@@ -1,0 +1,6 @@
+version,rule,sharpe_2004_2019,t_stat
+v1 (Oct 2026),"Carry from OECD 3M rates, 3/3",0.137,0.53
+v1 (Oct 2026),Same + 12-month vol targeting,0.095,0.36
+v2 (Nov 2026),1. Carry (3 long / 3 short),0.179,0.69
+v2 (Nov 2026),2. Carry / volatility,0.145,0.56
+v2 (Nov 2026),3. Carry + crisis filter,0.19,0.73

@@ -1,0 +1,4 @@
+rule,3. Carry + crisis filter
+n_trials,5
+lucky_sharpe,0.045
+dsr_2004_2019,0.7068

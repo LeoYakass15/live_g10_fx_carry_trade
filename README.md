@@ -1,155 +1,168 @@
-# G10 FX Carry Trade: Backtest and Crashes
+# G10 FX Carry Trade: Backtest on Real Forward Points and Live Track Record
 
-The carry trade is one of the oldest trades in FX: borrow in a currency with low
-interest rates, lend in a currency with high rates, and collect the difference.
-Textbook theory (uncovered interest parity) says the high-yield currency should
-depreciate by exactly the rate gap, so the trade should earn nothing on average.
-In practice it does earn money most of the time, then gives a large part back in
-a few violent months. Traders call it "picking up pennies in front of a steamroller".
+I test the oldest trade in FX: **buy the currencies that pay a high interest rate, sell the
+ones that pay a low rate, and collect the difference**. Theory (uncovered interest parity) says
+the high-yield currencies should fall by exactly the rate gap, so the trade should earn
+nothing. In practice it earns a small, steady carry and gives part of it back in a few violent
+months ("picking up pennies in front of a steamroller").
 
-I wanted to measure both sides on real data: how much the carry pays, and how
-much the crashes cost (2008, the Swiss franc in January 2015, Covid in 2020).
+This is version 2 of the project. Version 1 (October 2026) measured the carry with OECD
+interest rates. Version 2 reads it from **real 1-month forward points (Bloomberg)**, which is
+what a trader actually pays or earns on a forward.
 
-![Carry vs spot](results/04_carry_vs_spot.png)
+Three questions drive the project:
+1. **Is the Sharpe real, or did I find it by luck?** I answer with the t-stat and the Deflated Sharpe Ratio, I log every version I try, and I keep 2020-2026 aside until the end.
+2. **Is it a new source of return, or just equity risk in disguise?** I regress it on the US stock market.
+3. **Does it survive in real time?** From 27 November 2026, I run a 1 million USD paper book and publish it every weekend ([LIVE.md](LIVE.md)).
 
-*Over 24 years the rate differential earned about 3.2% a year, very regularly
-(green). Spot moves (orange) added money until 2008, then took it back in a few
-months. The trade lives on the carry and dies by the spot.*
-
-## The strategy
-
-At the end of each month I rank the 10 G10 currencies (AUD, CAD, CHF, EUR, GBP,
-JPY, NOK, NZD, SEK, USD) by their 3-month interest rate.
-
-- **Long** the 3 highest yielders, **short** the 3 lowest, equal weights.
-- The positions are 1-month FX forwards, rolled every month. Under covered
-  interest parity, a forward earns the spot move plus the rate differential,
-  so each month's return splits cleanly into a **carry** part (known in advance)
-  and a **spot** part (the risk).
-- The book is dollar neutral (as much long as short), so I do not take a view on
-  the USD itself. The USD is just one of the 10 currencies and can be long or short.
-- Cost: 2 bp of notional per monthly roll (a typical bid/ask on a G10 1-month
-  forward), on the whole book, which is about 0.5% a year.
-
-I compare it with two simple benchmarks: the classic **AUD/JPY** carry pair, and
-being **long the 9 other currencies against the USD** with no signal at all (to
-check that the carry book is not just a bet against the dollar).
-
-## Data
-
-Only free public data, monthly, from **April 2002 to February 2026** (286 months):
-
-- **Spots**: Federal Reserve H.10 daily noon rates (via FRED), last fixing of each month.
-- **Short rates**: OECD 3-month interbank rates (via FRED, series `IR3TIB01`).
-
-The window is set by the rates: the OECD 3-month yen rate starts in April 2002,
-and the euro and sterling series stop in January 2026. `scripts/download_data.py`
-downloads everything again.
-
-## Results
-
-| | Carry G10 (3/3) | AUD/JPY | Long G9 vs USD |
+| Rule 3, after costs | 2005-2019 (choice) | 2020-2026 (test) | 2005-2026 |
 |---|---|---|---|
-| Annual return | 2.1% | 4.3% | 0.5% |
-| Volatility | 7.4% | 13.4% | 8.1% |
-| Sharpe ratio | 0.31 | 0.38 | 0.10 |
-| Skewness | −0.49 | −1.14 | −0.11 |
-| Max drawdown | −30% | −44% | −42% |
-| Worst month | −10.6% (Oct 2008) | −24.1% (Oct 2008) | −8.9% (Oct 2008) |
+| Return per year | 1.5% | 2.5% | 1.8% |
+| Volatility | 8.0% | 5.4% | 7.3% |
+| **Sharpe** | **0.19** | **0.46** | **0.25** |
+| t-stat | 0.7 | 1.2 | 1.2 |
+| Max drawdown | -24% | -6.5% | -24% |
+| Skew | -0.8 | -0.7 | -0.8 |
 
-![Cumulative returns](results/03_cumulative_returns.png)
+## 1. The strategy
 
-**1. The carry is real, but it is not a free lunch.** The book earned the rate
-gap (+3.2% a year) but lost on spot (−0.4% a year) and costs (−0.5%). The
-returns have a negative skew: many small gains, a few large losses. The long-USD
-benchmark makes almost nothing, so the carry return does come from the ranking,
-not from a dollar bet.
+At the end of each month:
+- **Signal**: the 1-month carry of each G10 currency against the USD, read from its forward. If the forward EUR/USD is above the spot, the EUR pays less than the USD, so holding EUR costs money.
+- **Book**: rank the 10 currencies (AUD, CAD, CHF, EUR, GBP, JPY, NOK, NZD, SEK and the USD, whose carry is 0). Long the 3 best, short the 3 worst, one third each, through 1-month forwards. When the USD is in the top 3 (46% of the months), the book is simply long USD.
+- **Timing**: the carry known at the end of month t sets the book held in month t+1. No look-ahead.
+- **Costs**: 2 bp per USD traded (bid/ask of a G10 forward). The whole book rolls every month, so costs take about 0.5% per year.
 
-**2. Two very different periods.**
+**Why should it work?** High-rate currencies are risky: they belong to commodity exporters
+(AUD, NZD, NOK) and fall when the world economy slows. Investors want a premium to hold them.
+Low-rate currencies (JPY, CHF) are safe havens that rise in a crisis. So the carry is a reward
+for selling crash insurance, and the crashes are the price.
 
-| | 2002-2007 | 2009-2026 |
-|---|---|---|
-| Annual return | 8.7% | 1.6% |
-| Sharpe ratio | 1.28 | 0.26 |
-| Carry earned per year | 4.8% | 2.6% |
-| Spot per year | +4.3% | −0.3% |
+## 2. Data
 
-Before 2008, high-yield currencies did not depreciate, they *appreciated* (the
-"forward premium puzzle"): investors got the carry *and* the spot. After 2008,
-central banks cut rates close to zero almost everywhere. With less dispersion
-between rates, there is less carry to collect (see the rate chart below), and the
-spot no longer helps.
+- **Forward points**: Bloomberg HP screen, 1-month forward points of the 9 pairs (EURUSD1M, USDJPY1M...), month-end, February 2004 to October 2026. Checked against the Bloomberg statistics box (average, high and low): all 9 series match to 0.01, except SEK whose average is off by 0.03 points out of -71 (one cell probably misread, negligible).
+- **Spots**: Federal Reserve H.10 rates from FRED, month-end. Free.
+- **Version 1 carry**: OECD 3-month interbank rates from FRED. Free.
+- **US stock market**: Ken French Data Library. Free.
+- **Live**: Bloomberg FRD screen (spot and 1-month points of the 9 pairs), one photo per pair every Friday.
+- Raw Bloomberg data is not published (licence).
 
-![Short rates](results/01_short_rates.png)
+## 3. Backtest
 
-**3. Who is in the book.** NZD was long 91% of the time and AUD 72%; CHF was
-short 100% of the time and JPY 58%. The USD moved from funding currency (2002-2004,
-2010-2014) to high yielder (2017-2020, 2022-2025), which the dollar-neutral ranking
-picks up automatically.
+![Equity curve](results/1_equity_curve.png)
 
-![Positions](results/02_positions.png)
+I write three rules in my plan before running anything:
+1. **Carry**: 3 long / 3 short, equal weights.
+2. **Carry / volatility**: same, but ranked on carry divided by the currency's 12-month volatility.
+3. **Carry + crisis filter**: rule 1, cut in half when the average G10 volatility is above its 90th percentile (measured on the past only).
 
-### The crashes
-
-![Drawdowns](results/05_drawdowns.png)
-
-| Episode | Carry book | Spot part | Carry part | Biggest losses |
+| 2005-2026, after costs | 1. Carry | 2. Carry / vol | 3. Crisis filter | v1 (OECD rates) |
 |---|---|---|---|---|
-| GFC, Aug-Dec 2008 | **−23.3%** | −27.6% | +2.3% | long NOK (−9.2%), long AUD (−8.5%) |
-| SNB removes the EUR/CHF floor, Jan 2015 | −3.6% | −3.8% | +0.2% | short CHF (−2.6%), long NZD (−2.2%) |
-| Covid, Feb-Mar 2020 | −4.7% | −5.0% | +0.4% | long NOK (−3.9%), long CAD (−2.2%) |
+| Sharpe 2005-2019 | 0.18 | 0.14 | **0.19** | 0.14 |
+| Sharpe 2020-2026 | 0.46 | 0.63 | **0.46** | 0.38 |
+| Max drawdown | -31% | -32% | **-24%** | -30% |
+| Sep-Dec 2008 | -21% | -21% | **-16%** | |
+| January 2015 (Swiss franc) | -6.0% | -7.8% | -6.0% | |
+| March 2020 (Covid) | -5.0% | -5.0% | -5.0% | |
 
-![Crash contributions](results/07_crash_contributions.png)
+I pick the rule on 2005-2019 only: rule 3 wins, by a small margin. Then I open 2020-2026
+once. Rule 3 earns a Sharpe of 0.46 on the test period, better than before. Rule 2 does even
+better there (0.63), but I chose before looking, so I keep rule 3.
 
-- **2008 is the textbook carry crash.** When risk appetite collapsed, everyone
-  unwound at the same time: at the worst point AUD and NZD had lost about 30%
-  against the dollar and NOK 27%, while the yen, the main funding currency,
-  rallied. AUD/JPY lost 24% in October 2008 alone and 44% peak to trough. The
-  carry earned over those five months (+2.3%) was nothing against a −27.6% spot move.
-- **January 2015** was a jump, not a slow crash: the SNB removed the 1.20 floor
-  and the franc jumped by more than 15% within minutes. In a diversified book where CHF is
-  one short among three, the month cost 3.6%. A trader running a leveraged short
-  CHF position lost much more (the retail broker Alpari UK went bankrupt that week).
-  Month-end data also understates it: by the end of January the franc had given
-  back part of the jump.
-- **Covid** hit the commodity currencies (NOK, CAD) as oil collapsed. The loss
-  was smaller because the yen was not in the short leg at that time and the
-  rebound came quickly.
+**The crisis filter** cuts the book in half in 15 months, mostly from late 2007 to mid-2009.
+It brings the loss of September-December 2008 from -21% to -16%, and the max drawdown from -31%
+to -24%. It is late by nature (the volatility rises after the first fall), and it does nothing
+for a one-day shock like the Swiss franc in 2015.
 
-![Return distribution](results/06_return_distribution.png)
+![Carry vs spot](results/2_carry_vs_spot.png)
 
-### Can a simple risk filter help?
+**Where the money comes from**: the carry pays **+3.1% per year**, very regularly. Spot moves
+take back **-1.2% per year** and costs **-0.5%**. The trade lives on the carry and dies by the spot.
 
-I tried scaling the position to a constant 8% volatility, using the last
-12 months of realised vol (the scale for month t only uses data up to t-1).
+## 4. Is the Sharpe real?
 
-| Same period (May 2003 - Feb 2026) | Carry G10 | Vol-targeted |
-|---|---|---|
-| Annual return | 1.5% | 1.5% |
-| Sharpe ratio | 0.24 | 0.21 |
-| Max drawdown | −30.0% | −30.7% |
+| Measure | Question | Formula | My result |
+|---|---|---|---|
+| Sharpe | How much return per unit of risk? | mean / std × √12 | 0.19 (2005-2019) |
+| t-stat | Could the true mean be zero? | Sharpe × √years | 0.7 |
+| Deflated Sharpe | Same, knowing I tried 5 versions and the returns have fat tails | Bailey and Lopez de Prado (2014) | **0.71** |
 
-It does not help. The 2008 crash came after a calm period, so the filter was
-still fully invested when it started, and it cut the position *after* the losses,
-missing the 2009 rebound. A slow backward-looking vol filter is too late for a
-crash that starts with a jump. Better crash signals would be forward-looking:
-FX implied volatility, the VIX, or risk reversals, which price the crash risk
-before it happens.
+**t-stat.** With 15 years of data, a Sharpe of 0.19 gives t = 0.7, far from the bar of 2
+(or 3, as Harvey, Liu and Zhu ask). Even over the full 22 years, t = 1.2. A Sharpe of 0.25
+needs about 64 years of data to reach t = 2. **I cannot prove the carry premium is above zero
+with G10 data since 2004.** Longer studies (Lustig and Verdelhan, 1983-2009, 30+ currencies)
+can.
 
-![Vol target](results/08_vol_target.png)
+**Deflated Sharpe Ratio.** I count every version I ever tried, including the two of
+version 1 ([`results/trials_log.csv`](results/trials_log.csv)). With only 5 trials, all close
+to each other, the Sharpe the best one would show by luck is just 0.05: keeping the trial
+count low is what keeps the DSR alive. The DSR is **0.71**, below the 0.95 target, mainly
+because the sample is short and the skew is negative. **The rule does not pass.**
 
-## What I take from it (sales view)
+![Trials](results/4_trials.png)
 
-- The carry trade pays you to **sell crash insurance**: steady income, with a
-  negative skew. For a client, that has to be said upfront: a 2% a year carry can
-  disappear in one month.
-- The carry is locked in the forward price, so it is known on day one. The risk is
-  all in the spot. That is why carry products (high-yield deposits, dual currency
-  investments, TARFs on EM currencies) are sold in calm markets and hurt in
-  risk-off episodes.
-- Carry needs **dispersion of interest rates**. When all central banks are at zero
-  there is little to collect. With rates back to 2-5% since 2022, the trade became
-  interesting again: AUD/JPY returned about 8% a year on average in 2023-2025.
-- Diversification helps: 3 longs against 3 shorts has a third less drawdown than
-  AUD/JPY alone, half the volatility and a much less negative skew, for a similar Sharpe.
+## 5. Is it just equity risk?
 
+I regress the monthly P&L on the US stock market (excess return), with Newey-West t-stats:
+
+| Alpha per year | t-stat | Beta to stocks | t-stat | R² |
+|---|---|---|---|---|
+| -0.6% | -0.5 | **0.25** | 6.1 | 26% |
+
+Once I take out the stock market, nothing is left. In the 27 months where US stocks fall by more
+than 5%, the carry book loses 1.9% on average. The carry is a cousin of being long equities
+and short volatility: it pays in calm markets and loses when risk appetite collapses. A fund
+that already holds equities gets little diversification from it.
+
+## 6. Why version 2? Forward points vs OECD rates
+
+![Points vs OECD](results/3_points_vs_oecd.png)
+
+Under covered interest parity, the forward points should equal the interest rate gap. They do
+not, exactly:
+- **The gap mostly goes one way**: the forward makes most non-USD currencies pay less than the OECD rates
+  say, by 46 bp per year for JPY, 37 bp for NOK and 34 bp for EUR. This is the **cross-currency
+  basis**: since 2008, banks pay a premium to borrow USD through FX swaps, and the forward
+  carries that premium. Between 2014 and 2019, the OECD rates show a JPY carry of about zero,
+  while the forward shows -0.5% to -1%.
+- **The ranking changes**: the two measures are 93% to 99% correlated, yet the two versions hold
+  exactly the same 6 currencies in only 45% of the months.
+- **The result improves a little**: same rule, same months, Sharpe 0.24 with forward points
+  vs 0.18 with OECD rates. The real forward is the right measure because it is what I trade.
+
+## 7. Live track record
+
+The rules are frozen in [RULES.md](RULES.md). Every week I take a photo of the Bloomberg FRD
+screen for the 9 pairs at the Friday close. On the last Friday of the month, the code ranks the currencies on the
+carry of that photo and sets the new book. The rule is mechanical: anyone can redo the ranking
+from the published carry numbers, so I cannot pick the book after seeing the market. Over the
+weekend I compute the P&L. Before Monday 9:00 Paris time I commit. At each rebalance, I add a
+short letter to investors.
+
+| Since launch (27 Nov 2026) | |
+|---|---|
+| Weeks | 0 |
+| Cumulative P&L | - |
+| NAV (start 1,000,000 USD) | - |
+| Worst week | - |
+
+**For reference, the book at the end of October 2026** (backtest): long AUD (+0.8% carry),
+NOK (+0.5%) and USD; short CHF (-4.2%), JPY (-2.8%) and SEK (-2.0%). The first live book is
+set from the photos of Friday 27 November 2026.
+
+![Live vs backtest](results/5_live_vs_backtest.png)
+
+The cone shows what the backtest expects over the first year (mean, 1 and 2 standard
+deviations). One point is added every week. After a few weeks a t-stat means nothing. The real
+question is whether the live P&L stays inside the cone.
+
+**Latest week and full history:** [LIVE.md](LIVE.md).
+
+## How to run
+
+```
+pip install -r requirements.txt
+python scripts/download_spots.py   # once: FRED spots and OECD rates
+python backtest.py                 # backtest, statistics and charts in results/
+python live.py positions           # on the last Friday of the month: the new book
+python live.py week                # every weekend: P&L of the week
+```
