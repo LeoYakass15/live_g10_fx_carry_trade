@@ -1,4 +1,4 @@
-# G10 FX Carry Trade: Backtest on Real Forward Points and Live Track Record
+# G10 FX Carry: 21-Year Backtest and Live Track Record
 
 I test the oldest trade in FX: **buy the currencies that pay a high interest rate, sell the
 ones that pay a low rate, and collect the difference**. Theory (uncovered interest parity) says
@@ -145,9 +145,10 @@ short letter to investors.
 | NAV (start 1,000,000 USD) | - |
 | Worst week | - |
 
-**For reference, the book at the end of October 2026** (backtest): long AUD (+0.8% carry),
-NOK (+0.5%) and USD; short CHF (-4.2%), JPY (-2.8%) and SEK (-2.0%). The first live book is
-set from the photos of Friday 27 November 2026.
+**First live book (photos of Friday 27 November 2026):** long AUD (+0.7% carry per year),
+GBP (-0.1%) and USD; short CHF (-5.2%), JPY (-3.6%) and SEK (-2.7%). 333,333 USD per leg,
+crisis filter off. It is almost the same book as the backtest at the end of October (NOK out,
+GBP in).
 
 ![Live vs backtest](results/5_live_vs_backtest.png)
 
@@ -166,3 +167,9 @@ python backtest.py                 # backtest, statistics and charts in results/
 python live.py positions           # on the last Friday of the month: the new book
 python live.py week                # every weekend: P&L of the week
 ```
+
+References: Lustig and Verdelhan (2007), *The Cross Section of Foreign Currency Risk Premia*.
+Brunnermeier, Nagel and Pedersen (2008), *Carry Trades and Currency Crashes*. Menkhoff, Sarno,
+Schmeling and Schrimpf (2012), *Carry Trades and Global Foreign Exchange Volatility*. Du,
+Tepper and Verdelhan (2018), *Deviations from Covered Interest Rate Parity*. Bailey and Lopez de
+Prado (2014), *The Deflated Sharpe Ratio*. Harvey, Liu and Zhu (2016).

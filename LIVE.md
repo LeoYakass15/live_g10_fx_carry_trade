@@ -12,10 +12,29 @@ the lowest. The book changes once a month, on the last Friday. The newest entry 
 
 ## Pre-launch: positions traded at the photos of Friday 27 November 2026
 
-To be filled with `python live.py positions` once the 9 FRD photos of 27 November are in.
+Crisis filter: off, full size. Carry = 1M forward points of the Bloomberg FRD screen (BGN,
+Friday close), annualised. USD has a carry of 0 by construction.
 
-**Letter to investors, November 2026.** (2 to 4 sentences: what the book holds, why, and the
-main risk.)
+| Rank | Currency | Carry vs USD (% per year) | Position | Notional (USD) |
+|---|---|---|---|---|
+| 1 | AUD | +0.67% | **Long** | 333,333 |
+| 2 | USD | 0.00% | **Long** | (the rest of the book) |
+| 3 | GBP | -0.07% | **Long** | 333,333 |
+| 4 | NOK | -0.08% | - | |
+| 5 | NZD | -1.39% | - | |
+| 6 | CAD | -1.65% | - | |
+| 7 | EUR | -1.86% | - | |
+| 8 | SEK | -2.66% | **Short** | 333,333 |
+| 9 | JPY | -3.60% | **Short** | 333,333 |
+| 10 | CHF | -5.15% | **Short** | 333,333 |
+
+**Letter to investors, November 2026.** The G10 rate spread is small today: only the Australian
+dollar pays more than the dollar, so USD itself is one of the three longs. The book earns its
+carry on the short side, by funding in Swiss francs, yen and Swedish krona: these three legs
+bring about +3.8% per year on capital, and the whole book carries about +4.0% per year before
+spot moves. The main risk is the classic one for carry: a risk-off move where the yen and the franc
+rally hard, as in August 2024, which would cost more in one week than the carry earns in a
+quarter.
 
 ---
 
